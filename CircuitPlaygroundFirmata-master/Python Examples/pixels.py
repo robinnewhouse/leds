@@ -12,7 +12,7 @@ from circuitplayground import CircuitPlayground
 #     sys.exit(-1)
 # port = sys.argv[1]
 port = '/dev/cu.usbmodem1602551'
-
+nframes = 100
 
 # Connect to Circuit Playground board on specified port.
 board = CircuitPlayground(port)
@@ -35,29 +35,34 @@ colors = [ (255,   0,   0),  # Red color (components are red, green, blue)
 board.set_pixel_brightness(50)
 
 # Animate moving the colors across the pixels 100 times / 10 seconds.
+start_frame_time = time.time();
 print('Animating pixels for 10 seconds...')
 for offset in range(10000):
     # Go through each pixel and set its color based on its position and the
     # current offset.  Constrain these values to fall within the list of colors.
-    start_frame_time = time.time()*1000;
-    for i in range(5):
+    for i in range(12):
         # Find the color for this pixel.
         color = colors[(i+offset)%len(colors)]
         # Set the pixel color.
         board.set_pixel(i, (offset-0)%255, (offset-50)%255, (offset-100)%255)
+        # board.show_pixels()
+
     # Push the updated colors out to the pixels (this will make the pixels change
     # their color, the previous set_pixel calls just change the memory and not
     # the pixels).
     board.show_pixels()
-    finish_frame_time = time.time()*1000;
-    print("Render time = ", (finish_frame_time - start_frame_time), " milliseconds")
+    time.sleep(0.01)
+    if (offset%nframes == 0):
+      finish_frame_time = time.time();
+      print("Frame rate = ", int(nframes /(finish_frame_time - start_frame_time)), " fps")
+      start_frame_time = time.time();
     # Sleep for a bit between iterations.
-    # time.sleep(0.001)
+    # time.sleep(0.01)
 
 # Clear all the pixels to turn them off.
 board.clear_pixels()
 board.show_pixels()  # Make sure to call show after clear!
-time.sleep(0.1)      # Small delay to make sure board connection doesn't close
+# time.sleep(0.01)      # Small delay to make sure board connection doesn't close
                      # before previous command is processed.
 
 # Close Firmata board connection when done.
