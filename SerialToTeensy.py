@@ -1,9 +1,10 @@
 import time
 import serial
-import binascii
-NUM_LEDS = 10
+#import binascii
+NUM_LEDS = 100
 delay = 2
-light_run_time = 10
+render_delay = 0.01
+light_run_time = 100
 header = [0xDE, 0xAD, 0xBE, 0xEF]
 # configure the serial connections (the parameters differs on the device you are connecting to)
 ser = serial.Serial(
@@ -35,7 +36,7 @@ def test_serial_hex():
 	while time.time() < start_time+delay:
 		try:
 			# bin_val = int(ser.readline())
-			print(ser.readline().decode("ascii"),end=' ',flush=True)
+			print(ser.readline().decode("ascii"),end=" ",flush=True)
 		except Exception as e: break
 	print()
 
@@ -58,11 +59,35 @@ def cycle_trough_rainbow():
 	color = [0,0,0]
 	while time.time() < start_time+light_run_time:
 
-		color[0] = direction[0 + 5]
+		color[0] = color[0] + 5*direction[0]
+		color[1] = color[1] + 1*direction[1]
+		color[2] = color[2] + 2*direction[2]
+		for i in range(len(color)):
+			if color[i] >= 255: 
+				color[i] = 255
+				direction[i] = -1
+			if color[i] <= 0: 
+				color[i] = 0
+				direction[i] = 1
+
 		for i in range(0,NUM_LEDS):
 			leds[i] = color
 		send_leds_to_serial(leds)
 
+def bounce():
+	start_time = time.time()
+	direction = 1
+	position = 0 
+	color = [100,0,150]
+	while time.time() < start_time+light_run_time:
+		if position >=NUM_LEDS -1:
+			direction = -1
+		if position <=0:
+			direction = 1
+		leds = [[0,0,0]]*NUM_LEDS
+		leds[position] = color
+		position += direction
+		send_leds_to_serial(leds)
 
 
 
@@ -73,7 +98,7 @@ def send_leds_to_serial(leds):
 		color_array[i*3+1] = leds[i][1] #g
 		color_array[i*3+2] = leds[i][2] #b
 	ser.write(header + color_array)
-	time.sleep(0.005)
+	time.sleep(render_delay)
 
 def get_confirmation():
 	start_time = time.time()
@@ -90,7 +115,7 @@ def get_confirmation():
 
 # test_serial_hex()
 cycle_trough_rainbow()
-
+bounce()
 # print(ser.isOpen())
 
 # print(ser.read())

@@ -1,10 +1,11 @@
 #include <FastLED.h>
 
-#define NUM_LEDS 10
+#define NUM_LEDS 100
 #define DATA_PIN 14
 #define LED_TYPE WS2812B
 #define DELAY 1000
 #define SERIAL_PACKET_SIZE 500
+#define TIMEOUT_MS 50
 
 #define PIXEL_SET_PIXEL  0x03 // set the color value of pixel n using 32bit packed color value
 
@@ -19,6 +20,8 @@ uint char_position;
 void setup() {
   // initialize serial communication
   Serial.begin(57600);
+  Serial.setTimeout(TIMEOUT_MS);
+
   // initialize pin type
   FastLED.addLeds<LED_TYPE, DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setBrightness(20);
@@ -29,25 +32,19 @@ void setup() {
 
 
 
-void handle_packet(byte* data) {
-
-  if (data[0] == BEGIN_COMMAND && data[5] == END_COMMAND) {
-    uint index = data[1];
-    uint color = ((data[2] << 16) | (data[3] << 8) | data[4]);
-    leds[index] = color;
-
-    FastLED.show();
-
-  }
-
-  //  uint index = data[0];
-  //  uint color = ((data[1] << 16) | (data[2] << 8) | data[3]);
-  //  for (int i = 0; i < NUM_LEDS; i++) {
-  //    leds[i].setRGB(data[1], data[2], data[3]);
-  //  }
-  //  FastLED.show();
-
-}
+//void handle_packet(byte* data) {
+//
+//  if (data[0] == BEGIN_COMMAND && data[5] == END_COMMAND) {
+//    uint index = data[1];
+//    uint color = ((data[2] << 16) | (data[3] << 8) | data[4]);
+//    leds[index] = color;
+//
+//    FastLED.show();
+//
+//  }
+//
+//
+//}
 
 void debug(int i, int color) {
 
@@ -55,29 +52,6 @@ void debug(int i, int color) {
   FastLED.show();
 }
 
-
-
-/* ------------------------------------------------
-  SERIAL COM - HANDELING MULTIPLE BYTES inside ARDUINO - 01_simple version
-  by beltran berrocal
-
-  this prog establishes a connection with the pc and waits for it to send him
-  a long string of characters like "hello Arduino!".
-  Then Arduino informs the pc that it heard the whole sentence
-
-  this is the first step for establishing sentence long conversations between arduino and the pc.
-  serialRead() reads one byte at a time from the serial buffer.
-  so in order to print out the whole sentence at once
-  (it is actually still printing one byte at a time but the pc will receive it
-  not interupted by newLines or other printString inside you loop)
-  You must loop untill there are bytes in the serial buffer and
-  and print right away that byte you just read.
-  after that the loop can continue it's tasks.
-
-  created 15 Decembre 2005;
-  copyleft 2005 Progetto25zero1  <http://www.progetto25zero1.com>
-
-  --------------------------------------------------- */
 
 int  serIn; //var that will hold the bytes in read from the serialBuffer
 const uint8_t header[4] = { 0xDE, 0xAD, 0xBE, 0xEF };
@@ -103,8 +77,8 @@ void loop () {
         if (b != header[i]) {
           // whoops, not a match, this no longer looks like a header.
           looksLikeHeader = false;
-          debug(i, CRGB::Red);
-          FastLED.delay(500);
+//          debug(i, CRGB::Red);
+//          FastLED.delay(500);
         Serial.print("Looks like a header");
 
         }
@@ -117,13 +91,17 @@ void loop () {
 
     if (looksLikeHeader) {
 
+      char myBytes[NUM_LEDS*3];
+
+      Serial.readBytes(myBytes,NUM_LEDS*3);
+      
       // hey, we read all the header bytes!  Yay!  Now read the frame data
       int bytesRead = 0;
       int i = 0;
       while (bytesRead < (NUM_LEDS * 3)) {
-        int r = Serial.read();
-        int g = Serial.read();
-        int b = Serial.read();
+        int r = myBytes[3*i];
+        int g = myBytes[3*i+1];
+        int b = myBytes[3*i+2];
 
         leds[i].setRGB(r, g, b);
         bytesRead += 3;
