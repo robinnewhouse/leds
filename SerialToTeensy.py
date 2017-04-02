@@ -81,7 +81,7 @@ def cycle_trough_rainbow():
             fps(frame, start_time)
 
 def fps(frames, start_time):
-    print("fps: ", frames / (time.time() - start_time))
+    print("fps: ", "{0:.2f}".format(frames / (time.time() - start_time)))
     pass
 
 def bounce():
@@ -121,6 +121,8 @@ def get_confirmation():
             # print(response,end=' ',flush=True)
             if(recieve_confirmed in response):
                 return True
+            else :
+                return False
         except Exception as e: 
             print("excepted")
 

@@ -115,6 +115,7 @@ void recieve() {
       Serial.read(); // flush serial buffer
     }
 //    Send response to computer
+//     FastLED.delay(20); // simulate slow render time
      Serial.println(RECEIVE_CONFIRMED);
      digitalWrite(13, LOW); // indicate something is happening
 
