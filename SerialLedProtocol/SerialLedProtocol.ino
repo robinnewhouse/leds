@@ -6,12 +6,14 @@
 #define DELAY 1000
 #define SERIAL_PACKET_SIZE 500
 #define TIMEOUT_MS 50
+#define RECEIVE_CONFIRMED "*"
 
 #define PIXEL_SET_PIXEL  0x03 // set the color value of pixel n using 32bit packed color value
 
 #define BEGIN_COMMAND  0x0A
 #define END_COMMAND 0x0B
 
+int ledPin = 13; // for indicator
 CRGB leds[NUM_LEDS];
 
 byte recieved_serial[SERIAL_PACKET_SIZE];
@@ -19,7 +21,7 @@ uint char_position;
 
 void setup() {
   // initialize serial communication
-  Serial.begin(57600);
+  Serial.begin(9600);
   Serial.setTimeout(TIMEOUT_MS);
 
   // initialize pin type
@@ -27,24 +29,11 @@ void setup() {
   FastLED.setBrightness(20);
   FastLED.clear();
   FastLED.show();
+
+  pinMode(ledPin, OUTPUT);
   char_position = 0;
 }
 
-
-
-//void handle_packet(byte* data) {
-//
-//  if (data[0] == BEGIN_COMMAND && data[5] == END_COMMAND) {
-//    uint index = data[1];
-//    uint color = ((data[2] << 16) | (data[3] << 8) | data[4]);
-//    leds[index] = color;
-//
-//    FastLED.show();
-//
-//  }
-//
-//
-//}
 
 void debug(int i, int color) {
 
@@ -57,7 +46,15 @@ int  serIn; //var that will hold the bytes in read from the serialBuffer
 const uint8_t header[4] = { 0xDE, 0xAD, 0xBE, 0xEF };
 
 void loop () {
-  //simple feedback from Arduino  Serial.println("Hello World");
+//
+//    while (Serial.available() > 0) {
+//      Serial.read(); // flush serial buffer
+//    }
+    
+    recieve();
+}
+
+void recieve() {
 
   // we're going to read led data directly from serial, after we get our header
   //  Serial.print("first byte recieved");
@@ -71,7 +68,7 @@ void loop () {
     if (b == header[0]) {
       looksLikeHeader = true;
 
-      for (int i = 1; looksLikeHeader && (i < sizeof(header)); i++) {
+      for (uint8_t i = 1; looksLikeHeader && (i < sizeof(header)); i++) {
         b = Serial.read();
 
         if (b != header[i]) {
@@ -90,6 +87,7 @@ void loop () {
     }
 
     if (looksLikeHeader) {
+      digitalWrite(13, HIGH); // indicate something is happening
 
       char myBytes[NUM_LEDS*3];
 
@@ -112,9 +110,14 @@ void loop () {
     }
 
   }
+  
     while (Serial.available() > 0) {
       Serial.read(); // flush serial buffer
     }
+//    Send response to computer
+     Serial.println(RECEIVE_CONFIRMED);
+     digitalWrite(13, LOW); // indicate something is happening
+
 
 }
 
